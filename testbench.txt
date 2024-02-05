@@ -1,0 +1,113 @@
+module ahb_to_apb_bridge_tb;
+
+  reg                   clk;
+  reg                   reset;
+  reg                   ahb_hclk;
+  reg                   ahb_hsel;
+  reg                   ahb_htrans;
+  reg [31:0]            ahb_haddr;
+  reg [31:0]            ahb_hwdatabus;
+  wire [31:0]           ahb_hrddatabus;
+  wire                  ahb_hready;
+  reg                   apb_pclk;
+  reg                   apb_psel;
+  reg                   apb_penable;
+  reg                   apb_pwrite;
+  reg [31:0]            apb_paddr;
+  reg [31:0]            apb_pwdata;
+  wire [31:0]           apb_prdata;
+  wire                  apb_pready;
+
+  ahb_to_apb_bridge u_ahb_to_apb_bridge (
+    .clk(clk),
+    .reset(reset),
+    .ahb_hclk(ahb_hclk),
+    .ahb_hsel(ahb_hsel),
+    .ahb_htrans(ahb_htrans),
+    .ahb_haddr(ahb_haddr),
+    .ahb_hwdatabus(ahb_hwdatabus),
+    .ahb_hrddatabus(ahb_hrddatabus),
+    .ahb_hready(ahb_hready),
+    .apb_pclk(apb_pclk),
+    .apb_psel(apb_psel),
+    .apb_penable(apb_penable),
+    .apb_pwrite(apb_pwrite),
+    .apb_paddr(apb_paddr),
+    .apb_pwdata(apb_pwdata),
+    .apb_prdata(apb_prdata),
+    .apb_pready(apb_pready)
+  );
+
+  always begin
+    #5 clk = ~clk;
+    #5 ahb_hclk = ~ahb_hclk;
+    #5 apb_pclk = ~apb_pclk;
+  end
+
+  initial begin
+    clk = 0;
+    reset = 0;
+    ahb_hclk = 0;
+    ahb_hsel = 0;
+    ahb_htrans = 0;
+    ahb_haddr = 0;
+    ahb_hwdatabus = 0;
+    apb_pclk = 0;
+    apb_psel = 0;
+    apb_penable = 0;
+    apb_pwrite = 0;
+    apb_paddr = 0;
+    apb_pwdata = 0;
+
+    // Reset
+    reset = 1;
+    #10 reset = 0;
+
+    // Test case 1: AHB read transfer
+   #10 ahb_hsel = 1;
+   #10 ahb_haddr = 32'h00000000;
+   #10 ahb_htrans = 2'b10; // Read transfer
+   #10 ahb_htrans = 2'b00; // Idle state
+   #10 ahb_hsel = 0;
+
+    // Test case 2: AHB write transfer
+   #10 ahb_hsel = 1;
+   #10 ahb_haddr = 32'h00000004;
+   #10 ahb_hwdatabus = 32'h11223344;
+   #10 ahb_htrans = 2'b01; // Write transfer
+   #10 ahb_htrans = 2'b00; // Idle state
+   #10 ahb_hsel = 0;
+    
+   #10 ahb_hsel = 1;
+   #10 ahb_haddr = 32'h000000016;
+   #10 ahb_hwdatabus = 32'h44332211;
+   #10 ahb_htrans = 2'b01; // Write transfer
+   #10 ahb_htrans = 2'b00; // Idle state
+   #10 ahb_hsel = 0;
+    
+      // Test case 3: Read transfer
+   #5  apb_psel = 1;
+   #10 apb_penable = 1;
+   #10 apb_pwrite = 1;
+   #10 apb_paddr = 32'h12345678;
+   #10 apb_pwdata = 32'h00001101;
+    
+   #5  apb_psel = 0;
+   #10 apb_penable = 0;
+   #10 apb_pwrite = 0;
+   #10 apb_paddr = 32'h00000000;
+
+   #5  apb_psel = 1;
+   #10 apb_penable = 1;
+   #10 apb_pwrite = 1;
+   #10 apb_paddr = 32'h36521436;
+   #10 apb_pwdata = 32'h00001010;
+   #100 $finish;
+  end
+ initial begin $monitor("clk=%d,reset=%d,ahb_hclk=%d,ahb_hsel=%d,ahb_htrans=%d,ahb_haddr=%d,ahb_hwdatabus=%d,ahb_hrddatabus=%d,ahb_hready=%d,apb_pclk=%d,apb_psel=%d,apb_penable=%d,apb_pwrite=%d,apb_paddr=%d,apb_pwdata=%d,apb_prdata=%d,apb_pready=%d",ahb_hclk,ahb_hsel,ahb_htrans,ahb_haddr,ahb_hwdatabus,ahb_hrddatabus,ahb_hready,apb_pclk,apb_psel,apb_penable,apb_pwrite,apb_paddr,apb_pwdata,apb_prdata,apb_pready
+);
+      $dumpfile("dump.vcd");
+      $dumpvars(1);
+    end 
+
+endmodule

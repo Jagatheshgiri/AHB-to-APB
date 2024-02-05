@@ -1,0 +1,47 @@
+module ahb_to_apb_bridge (
+  input  wire                   clk,
+  input  wire                   reset,
+  input  wire                   ahb_hclk,
+  input  wire                   ahb_hsel,
+  input  wire                   ahb_htrans,
+  input  wire [31:0]            ahb_haddr,
+  input  wire [31:0]            ahb_hwdatabus,
+  output wire [31:0]            ahb_hrddatabus,
+  output wire                   ahb_hready,
+  input  wire                   apb_pclk,
+  input  wire                   apb_psel,
+  input  wire                   apb_penable,
+  input  wire                   apb_pwrite,
+  input  wire [31:0]            apb_paddr,
+  input  wire [31:0]            apb_pwdata,
+  output wire [31:0]            apb_prdata,
+  output wire                   apb_pready
+);
+
+  reg [31:0] ahb_hrddatabus_reg;
+  reg        ahb_hready_reg;
+  reg        apb_pready_reg;
+  reg [31:0] apb_prdata_reg;
+
+  always @(posedge ahb_hclk) begin
+    if (ahb_hsel && ahb_htrans == 2'b10) begin
+      apb_prdata_reg <= apb_prdata;
+      apb_pready_reg <= 1'b1;
+    end else if (ahb_hsel && ahb_htrans == 2'b01) begin
+      apb_prdata_reg <= apb_prdata;
+      apb_pready_reg <= 1'b1;
+    end else begin
+      apb_prdata_reg <= apb_prdata;
+      apb_pready_reg <= 1'b0;
+    end
+
+    ahb_hrddatabus_reg <= apb_prdata_reg;
+    ahb_hready_reg <= apb_pready_reg;
+  end
+
+  assign ahb_hrddatabus = ahb_hrddatabus_reg;
+  assign ahb_hready = ahb_hready_reg;
+  assign apb_prdata = apb_prdata_reg;
+  assign apb_pready = apb_pready_reg;
+
+endmodule
